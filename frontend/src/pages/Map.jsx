@@ -425,7 +425,7 @@ const Map = () => {
       </MapContainer>
 
       {/* Control Panel */}
-      <div className="absolute top-20 left-4 z-1000">
+      <div className="absolute top-20 left-4 z-[1000]">
         <motion.div
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -528,7 +528,7 @@ const Map = () => {
 
       {/* Emergency Alerts Counter */}
       {emergencyAlerts.length > 0 && (
-        <div className="absolute top-20 right-4 z-1000">
+        <div className="absolute top-20 right-4 z-[1000]">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
@@ -543,7 +543,7 @@ const Map = () => {
       )}
 
       {/* Instructions */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-1000">
+      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000]">
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
