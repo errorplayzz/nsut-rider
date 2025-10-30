@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents, Circle } from 'react-leaflet'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { useSocket } from '../contexts/SocketContext'
@@ -71,6 +71,7 @@ const Map = () => {
   const [weather, setWeather] = useState(null)
   const [routeData, setRouteData] = useState(null)
   const [destination, setDestination] = useState(null)
+  const [showControls, setShowControls] = useState(true)
   
   const { socket, updateLocation } = useSocket()
   const { user } = useAuth()
@@ -424,13 +425,32 @@ const Map = () => {
         ))}
       </MapContainer>
 
+      {/* Toggle Button */}
+      <button
+        onClick={() => setShowControls(!showControls)}
+        className="absolute top-4 left-4 z-[1001] bg-neon-cyan text-dark-900 p-3 rounded-full shadow-lg hover:bg-cyan-400 transition-all"
+        title={showControls ? "Hide Controls" : "Show Controls"}
+      >
+        {showControls ? (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        )}
+      </button>
+
       {/* Control Panel */}
-      <div className="absolute top-20 left-4 z-[1000]">
-        <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="glass-morphism rounded-xl p-4 space-y-4 max-w-xs"
-        >
+      {showControls && (
+        <div className="absolute top-20 left-4 z-[1000]">
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            className="glass-morphism rounded-xl p-4 space-y-4 max-w-xs"
+          >
           {/* Weather Info */}
           {weather && (
             <div className="text-center">
@@ -524,10 +544,11 @@ const Map = () => {
             </div>
           )}
         </motion.div>
-      </div>
+        </div>
+      )}
 
       {/* Emergency Alerts Counter */}
-      {emergencyAlerts.length > 0 && (
+      {showControls && emergencyAlerts.length > 0 && (
         <div className="absolute top-20 right-4 z-[1000]">
           <motion.div
             initial={{ scale: 0 }}
@@ -543,7 +564,8 @@ const Map = () => {
       )}
 
       {/* Instructions */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000]">
+      {showControls && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-[1000]">
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -553,7 +575,8 @@ const Map = () => {
             Click on map to set destination • Use controls to find nearby services
           </p>
         </motion.div>
-      </div>
+        </div>
+      )}
     </div>
   )
 }
