@@ -64,11 +64,27 @@ const io = new Server(server, {
   pingInterval: 25000
 })
 
-// Rate limiting
+// Rate limiting - More lenient for production
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  max: process.env.NODE_ENV === 'production' ? 500 : 100, // 500 requests per 15 min in production
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting for certain IPs if needed
+  skip: (req) => {
+    // You can add trusted IPs here if needed
+    return false;
+  }
+})
+
+// Separate rate limiter for auth routes (more lenient)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 50 : 20, // 50 login attempts per 15 min
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 })
 
 // Middleware
@@ -116,7 +132,7 @@ app.get('/api/health', (req, res) => {
 })
 
 // API Routes
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', authLimiter, authRoutes) // Separate rate limiter for auth
 app.use('/api/gps', gpsRoutes)
 app.use('/api/emergency', emergencyRoutes)
 app.use('/api/weather', weatherRoutes)
