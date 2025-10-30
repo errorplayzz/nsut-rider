@@ -20,8 +20,9 @@ const Dashboard = () => {
   const [weather, setWeather] = useState(null)
   const [nearbyAlerts, setNearbyAlerts] = useState([])
   const [leaderboard, setLeaderboard] = useState([])
-  const [batteryLevel, setBatteryLevel] = useState(85)
+  const [batteryLevel, setBatteryLevel] = useState(null) // Start with null to show loading
   const [isCharging, setIsCharging] = useState(false)
+  const [batterySupported, setBatterySupported] = useState(true)
   const [isRiding, setIsRiding] = useState(false)
   const [currentLocation, setCurrentLocation] = useState(null)
   
@@ -36,24 +37,41 @@ const Dashboard = () => {
     fetchNearbyAlerts()
     fetchLeaderboard()
     getCurrentLocation()
+    
     // Integrate with the Battery Status API if available
     let batteryMgr = null
-    if (navigator.getBattery) {
-      navigator.getBattery().then(battery => {
-        batteryMgr = battery
-        const updateBattery = () => {
-          setBatteryLevel(Math.round(battery.level * 100))
-          setIsCharging(Boolean(battery.charging))
+    const initBattery = async () => {
+      try {
+        if ('getBattery' in navigator) {
+          const battery = await navigator.getBattery()
+          batteryMgr = battery
+          
+          const updateBattery = () => {
+            const level = Math.round(battery.level * 100)
+            const charging = Boolean(battery.charging)
+            setBatteryLevel(level)
+            setIsCharging(charging)
+            console.log('Battery updated:', level, charging)
+          }
+
+          updateBattery()
+          
+          battery.addEventListener('levelchange', updateBattery)
+          battery.addEventListener('chargingchange', updateBattery)
+        } else {
+          console.warn('Battery API not supported in this browser')
+          setBatterySupported(false)
+          // Fallback: Show device battery if available, otherwise hide
+          setBatteryLevel(null)
         }
-
-        updateBattery()
-
-        battery.addEventListener('levelchange', updateBattery)
-        battery.addEventListener('chargingchange', updateBattery)
-      }).catch(err => {
-        console.warn('Battery API not available:', err)
-      })
+      } catch (err) {
+        console.warn('Battery API error:', err)
+        setBatterySupported(false)
+        setBatteryLevel(null)
+      }
     }
+    
+    initBattery()
 
     return () => {
       try {
@@ -279,6 +297,7 @@ const Dashboard = () => {
           </motion.div>
 
           {/* Battery Status */}
+          {batteryLevel !== null && batterySupported && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -313,6 +332,7 @@ const Dashboard = () => {
               </button>
             )}
           </motion.div>
+          )}
 
           {/* Weather */}
           <motion.div
