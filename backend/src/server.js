@@ -32,10 +32,26 @@ const app = express()
 const server = createServer(app)
 
 // CORS configuration
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? [
+      'https://nsut-rider-6ge2.vercel.app',
+      'https://nsut-rider.vercel.app',
+      ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(url => url.trim()) : [])
+    ]
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? (process.env.CORS_ORIGIN || 'https://nsut-rider-6ge2.vercel.app').split(',').map(url => url.trim())
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is allowed or matches Vercel pattern
+    if (allowedOrigins.includes(origin) || origin.match(/https:\/\/nsut-rider.*\.vercel\.app$/)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
